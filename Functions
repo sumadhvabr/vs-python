@@ -1,0 +1,19 @@
+def Function_name(parameters):
+    """ Docstring """
+    return value
+
+def greet():
+    ''' this function returns a greeting message'''
+    print('hello, guys')
+#call
+greet()
+
+
+
+#______________________________________-
+# get the list of even numbers
+
+
+
+
+
