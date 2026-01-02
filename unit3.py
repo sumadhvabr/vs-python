@@ -1287,109 +1287,212 @@
 # ===============================
 # IMPORT LIBRARIES
 # ===============================
+# import pandas as pd
+# import numpy as np
+# import matplotlib.pyplot as plt
+
+# print("\n--- WATER FLOW SENSOR OUTPUT ---\n")
+
+# # ===============================
+# # TIME SERIES CREATION
+# # ===============================
+# seconds = 48 * 60 * 60
+# timestamps = pd.date_range("2025-01-01", periods=seconds, freq="s")
+
+# # ===============================
+# # FLOW INITIALIZATION
+# # ===============================
+# flow_values = np.zeros(seconds)
+
+# # ===============================
+# # NORMAL WATER USAGE EVENTS
+# # ===============================
+# for i in range(40):
+#     idx = np.random.randint(0, seconds - 600)
+#     length = np.random.randint(30, 600)
+#     flow_values[idx:idx + length] = np.random.uniform(5, 15)
+
+# # ===============================
+# # SLOW LEAK SIMULATION (6 HOURS)
+# # ===============================
+# leak_begin = 10 * 60 * 60
+# leak_end = leak_begin + (6 * 60 * 60)
+# flow_values[leak_begin:leak_end] += 0.5
+
+# # ===============================
+# # SENSOR NOISE
+# # ===============================
+# random_noise = np.random.normal(0, 0.2, seconds)
+# flow_values = np.where(flow_values > 0, flow_values + random_noise, 0)
+# flow_values = np.clip(flow_values, 0, None)
+
+# # ===============================
+# # DATAFRAME CREATION
+# # ===============================
+# water_df = pd.DataFrame({
+#     "timestamp": timestamps,
+#     "flow_lpm": flow_values
+# })
+
+# # ===============================
+# # EVENT DETECTION
+# # ===============================
+# water_df["usage_event"] = water_df["flow_lpm"] > 1
+
+# # ===============================
+# # HOURLY WATER CONSUMPTION (LITERS)
+# # ===============================
+# hourly_consumption = (
+#     water_df
+#     .resample("h", on="timestamp")["flow_lpm"]
+#     .sum() / 60
+# )
+
+# # ===============================
+# # LEAK IDENTIFICATION
+# # ===============================
+# water_df["leak_detected"] = (
+#     (water_df["flow_lpm"] > 0.2) &
+#     (water_df["flow_lpm"] < 1)
+# )
+
+# # ===============================
+# # USAGE TYPE CLASSIFICATION
+# # ===============================
+# water_df["usage_type"] = "Idle"
+
+# water_df.loc[water_df["flow_lpm"] > 10, "usage_type"] = "High"
+# water_df.loc[water_df["flow_lpm"].between(3, 10), "usage_type"] = "Medium"
+# water_df.loc[water_df["flow_lpm"].between(0.2, 3), "usage_type"] = "Low"
+
+# # ===============================
+# # LEAKAGE IMPACT REPORT
+# # ===============================
+# leak_loss = water_df.loc[
+#     water_df["leak_detected"], "flow_lpm"
+# ].sum() / 60
+
+# print("Total water used per hour (first 5 hours):")
+# print(hourly_consumption.head())
+
+# print("\nTotal water lost due to leakage:", round(leak_loss, 2), "litres")
+
+# # ===============================
+# # VISUALIZATION
+# # ===============================
+# plt.figure()
+# (
+#     water_df
+#     .set_index("timestamp")["flow_lpm"]
+#     .resample("h")
+#     .mean()
+#     .plot()
+# )
+# plt.title("Hourly Average Water Flow")
+# plt.xlabel("Time")
+# plt.ylabel("Flow (LPM)")
+# plt.show()
+
+# ===============================
+# REQUIRED LIBRARIES
+# ===============================
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-print("\n--- WATER FLOW SENSOR OUTPUT ---\n")
+print("\n--- HEART RATE SENSOR OUTPUT ---\n")
 
 # ===============================
-# TIME SERIES CREATION
+# TIME INDEX GENERATION
 # ===============================
-seconds = 48 * 60 * 60
-timestamps = pd.date_range("2025-01-01", periods=seconds, freq="s")
+total_points = (24 * 60 * 60) // 5
+timestamps = pd.date_range("2025-01-01", periods=total_points, freq="5s")
 
 # ===============================
-# FLOW INITIALIZATION
+# HEART RATE INITIALIZATION
 # ===============================
-flow_values = np.zeros(seconds)
+hr_values = np.random.normal(loc=70, scale=5, size=total_points)
 
 # ===============================
-# NORMAL WATER USAGE EVENTS
+# SLEEP SIMULATION (FIRST 6 HOURS)
 # ===============================
-for i in range(40):
-    idx = np.random.randint(0, seconds - 600)
-    length = np.random.randint(30, 600)
-    flow_values[idx:idx + length] = np.random.uniform(5, 15)
+sleep_len = (6 * 60 * 60) // 5
+hr_values[:sleep_len] = hr_values[:sleep_len] - 15
 
 # ===============================
-# SLOW LEAK SIMULATION (6 HOURS)
+# EXERCISE + RECOVERY SIMULATION
 # ===============================
-leak_begin = 10 * 60 * 60
-leak_end = leak_begin + (6 * 60 * 60)
-flow_values[leak_begin:leak_end] += 0.5
+exercise_points = [3000, 8000, 12000]
+
+for idx in exercise_points:
+    # Exercise peak
+    hr_values[idx:idx + 600] = hr_values[idx:idx + 600] + 50
+    
+    # Gradual recovery
+    hr_values[idx + 600:idx + 1200] = (
+        hr_values[idx + 600:idx + 1200] -
+        np.linspace(50, 0, 600)
+    )
 
 # ===============================
-# SENSOR NOISE
+# SENSOR DROPOUTS
 # ===============================
-random_noise = np.random.normal(0, 0.2, seconds)
-flow_values = np.where(flow_values > 0, flow_values + random_noise, 0)
-flow_values = np.clip(flow_values, 0, None)
+missing_idx = np.random.choice(total_points, 100, replace=False)
+hr_values[missing_idx] = np.nan
 
 # ===============================
 # DATAFRAME CREATION
 # ===============================
-water_df = pd.DataFrame({
+hr_df = pd.DataFrame({
     "timestamp": timestamps,
-    "flow_lpm": flow_values
+    "bpm": hr_values
 })
 
 # ===============================
-# EVENT DETECTION
+# ACTIVITY INFERENCE
 # ===============================
-water_df["usage_event"] = water_df["flow_lpm"] > 1
-
-# ===============================
-# HOURLY WATER CONSUMPTION (LITERS)
-# ===============================
-hourly_consumption = (
-    water_df
-    .resample("h", on="timestamp")["flow_lpm"]
-    .sum() / 60
+hr_df["activity_state"] = np.where(
+    hr_df["bpm"] < 60,
+    "Sleep",
+    "Active"
 )
 
 # ===============================
-# LEAK IDENTIFICATION
+# EXERCISE IDENTIFICATION
 # ===============================
-water_df["leak_detected"] = (
-    (water_df["flow_lpm"] > 0.2) &
-    (water_df["flow_lpm"] < 1)
+hr_df["exercise_session"] = hr_df["bpm"] > 120
+
+# ===============================
+# RECOVERY DETECTION
+# ===============================
+hr_df["recovered"] = hr_df["bpm"].between(70, 90)
+
+# ===============================
+# ABNORMAL HEART RATE FLAGGING
+# ===============================
+hr_df["abnormal_rate"] = (
+    (hr_df["bpm"] > 160) |
+    (hr_df["bpm"] < 40)
 )
 
 # ===============================
-# USAGE TYPE CLASSIFICATION
+# FITNESS SUMMARY
 # ===============================
-water_df["usage_type"] = "Idle"
+summary_table = hr_df.groupby("activity_state")["bpm"].mean()
 
-water_df.loc[water_df["flow_lpm"] > 10, "usage_type"] = "High"
-water_df.loc[water_df["flow_lpm"].between(3, 10), "usage_type"] = "Medium"
-water_df.loc[water_df["flow_lpm"].between(0.2, 3), "usage_type"] = "Low"
-
-# ===============================
-# LEAKAGE IMPACT REPORT
-# ===============================
-leak_loss = water_df.loc[
-    water_df["leak_detected"], "flow_lpm"
-].sum() / 60
-
-print("Total water used per hour (first 5 hours):")
-print(hourly_consumption.head())
-
-print("\nTotal water lost due to leakage:", round(leak_loss, 2), "litres")
+print("Daily Fitness Summary (Average Heart Rate):")
+print(summary_table)
 
 # ===============================
 # VISUALIZATION
 # ===============================
 plt.figure()
 (
-    water_df
-    .set_index("timestamp")["flow_lpm"]
-    .resample("h")
-    .mean()
+    hr_df
+    .set_index("timestamp")["bpm"]
     .plot()
 )
-plt.title("Hourly Average Water Flow")
+plt.title("Heart Rate Variation Over 24 Hours")
 plt.xlabel("Time")
-plt.ylabel("Flow (LPM)")
+plt.ylabel("Heart Rate (BPM)")
 plt.show()
-
