@@ -1284,5 +1284,112 @@
 # print(f'Deseralised data is {p.loads(p_b)},{p.loads(p_c)},{p.loads(p_d)}')
 
 
+# ===============================
+# IMPORT LIBRARIES
+# ===============================
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
+print("\n--- WATER FLOW SENSOR OUTPUT ---\n")
+
+# ===============================
+# TIME SERIES CREATION
+# ===============================
+seconds = 48 * 60 * 60
+timestamps = pd.date_range("2025-01-01", periods=seconds, freq="s")
+
+# ===============================
+# FLOW INITIALIZATION
+# ===============================
+flow_values = np.zeros(seconds)
+
+# ===============================
+# NORMAL WATER USAGE EVENTS
+# ===============================
+for i in range(40):
+    idx = np.random.randint(0, seconds - 600)
+    length = np.random.randint(30, 600)
+    flow_values[idx:idx + length] = np.random.uniform(5, 15)
+
+# ===============================
+# SLOW LEAK SIMULATION (6 HOURS)
+# ===============================
+leak_begin = 10 * 60 * 60
+leak_end = leak_begin + (6 * 60 * 60)
+flow_values[leak_begin:leak_end] += 0.5
+
+# ===============================
+# SENSOR NOISE
+# ===============================
+random_noise = np.random.normal(0, 0.2, seconds)
+flow_values = np.where(flow_values > 0, flow_values + random_noise, 0)
+flow_values = np.clip(flow_values, 0, None)
+
+# ===============================
+# DATAFRAME CREATION
+# ===============================
+water_df = pd.DataFrame({
+    "timestamp": timestamps,
+    "flow_lpm": flow_values
+})
+
+# ===============================
+# EVENT DETECTION
+# ===============================
+water_df["usage_event"] = water_df["flow_lpm"] > 1
+
+# ===============================
+# HOURLY WATER CONSUMPTION (LITERS)
+# ===============================
+hourly_consumption = (
+    water_df
+    .resample("h", on="timestamp")["flow_lpm"]
+    .sum() / 60
+)
+
+# ===============================
+# LEAK IDENTIFICATION
+# ===============================
+water_df["leak_detected"] = (
+    (water_df["flow_lpm"] > 0.2) &
+    (water_df["flow_lpm"] < 1)
+)
+
+# ===============================
+# USAGE TYPE CLASSIFICATION
+# ===============================
+water_df["usage_type"] = "Idle"
+
+water_df.loc[water_df["flow_lpm"] > 10, "usage_type"] = "High"
+water_df.loc[water_df["flow_lpm"].between(3, 10), "usage_type"] = "Medium"
+water_df.loc[water_df["flow_lpm"].between(0.2, 3), "usage_type"] = "Low"
+
+# ===============================
+# LEAKAGE IMPACT REPORT
+# ===============================
+leak_loss = water_df.loc[
+    water_df["leak_detected"], "flow_lpm"
+].sum() / 60
+
+print("Total water used per hour (first 5 hours):")
+print(hourly_consumption.head())
+
+print("\nTotal water lost due to leakage:", round(leak_loss, 2), "litres")
+
+# ===============================
+# VISUALIZATION
+# ===============================
+plt.figure()
+(
+    water_df
+    .set_index("timestamp")["flow_lpm"]
+    .resample("h")
+    .mean()
+    .plot()
+)
+plt.title("Hourly Average Water Flow")
+plt.xlabel("Time")
+plt.ylabel("Flow (LPM)")
+plt.show()
 
